@@ -1,0 +1,539 @@
+--[[
+    DELTA HUB v3.3 — Eternal Studio 🇧🇷
+    Discord: https://discord.gg/fmznbXuRXZ
+    Key: Delta
+    Ambiente de teste/desenvolvimento autorizado
+]]
+
+--// SERVIÇOS
+local TweenService     = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService       = game:GetService("RunService")
+local Players          = game:GetService("Players")
+local CoreGui          = game:GetService("CoreGui")
+local Lighting         = game:GetService("Lighting")
+local HttpService      = game:GetService("HttpService")
+local TeleportService  = game:GetService("TeleportService")
+
+local Stats = nil
+pcall(function() Stats = game:GetService("Stats") end)
+
+local LocalPlayer = Players.LocalPlayer
+if not LocalPlayer then
+    repeat task.wait(0.1) until Players.LocalPlayer
+    LocalPlayer = Players.LocalPlayer
+end
+
+local Camera = workspace.CurrentCamera
+workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
+    Camera = workspace.CurrentCamera
+end)
+
+--// LIMPEZA
+for _, nome in ipairs({"DeltaHub","DeltaHubLoading","DeltaHubFloat","DeltaHubNotif","DeltaHubESP","DeltaHubKey","DeltaHubFOV"}) do
+    pcall(function()
+        local o = CoreGui:FindFirstChild(nome)
+        if o then o:Destroy() end
+    end)
+end
+
+pcall(function()
+    local bp = LocalPlayer:FindFirstChildOfClass("Backpack")
+    if bp then
+        for _, it in ipairs(bp:GetChildren()) do
+            if it:IsA("Tool") and it.Name == "DeltaTPTool" then it:Destroy() end
+        end
+    end
+    local ch = LocalPlayer.Character
+    if ch then
+        for _, it in ipairs(ch:GetChildren()) do
+            if it:IsA("Tool") and it.Name == "DeltaTPTool" then it:Destroy() end
+        end
+    end
+end)
+
+--// CONFIG
+local Cfg = {
+    Discord = "https://discord.gg/fmznbXuRXZ",
+    Key = "Delta",
+    Versao = "3.3.0",
+    Cores = {
+        Fundo=Color3.fromRGB(11,11,15), Painel=Color3.fromRGB(20,20,27),
+        Painel2=Color3.fromRGB(27,27,36), Painel3=Color3.fromRGB(36,36,48),
+        Borda=Color3.fromRGB(46,46,62), Texto=Color3.fromRGB(240,240,248),
+        TextoSec=Color3.fromRGB(145,145,165), Destaque=Color3.fromRGB(138,100,255),
+        Destaque2=Color3.fromRGB(96,66,210), DestaqueGlow=Color3.fromRGB(180,150,255),
+        Verde=Color3.fromRGB(74,222,128), Vermelho=Color3.fromRGB(248,90,100),
+        Amarelo=Color3.fromRGB(250,204,90), Azul=Color3.fromRGB(96,176,255),
+    },
+    Fonte=Enum.Font.Gotham, FonteBold=Enum.Font.GothamBold,
+}
+
+--// ESTADO
+local State = {
+    KeyValidated = false,
+    AntiLag=false, FpsBoost=false, PerfMode=false,
+    ReduceEffects=false, ReduceParticles=false,
+    OptimizeUI=false, OptimizeUpdates=false,
+    Aimbot=false, FovEnabled=true, FovSize=150,
+    FovPosY=0.62, FovPosition="Center",
+    TargetPart="Cabeça", TeamCheck=true, TargetDistance=300,
+    TargetSelection="Cruz", AimSmoothing=25, TargetLock=false,
+    SilentAim=false, SilentTarget="Cabeça",
+    SilentFov=150, SilentDistance=300, SilentTeamCheck=true,
+    Esp=false, EspBox=true, EspName=true, EspDistance=false,
+    EspHealth=true, EspSkeleton=false, EspTracer=false, EspHead=false,
+    EspTeamCheck=true, EspBoxStyle="Full",
+    EspColor=Color3.fromRGB(138,100,255),
+    EspTextSize=12, EspThickness=1, EspTracerPos="Top",
+    EspDistanceLimit=500, EspHealthPos="Left",
+    WalkSpeedOn=false, WalkSpeed=16,
+    JumpPowerOn=false, JumpPower=50,
+    GravityOn=false, Gravity=196.2,
+    CameraFovOn=false, CameraFov=70,
+    Sprint=false, AutoJump=false,
+    Notifications=true, UIScale=1,
+    ParkourAutoJump=false, ParkourSprint=false,
+    JJEnabled=false, JJAj=true, JJDelay=0.1,
+    JJSprint=true, JJMovement=false, JJInterval=1,
+    FloatPos=nil,
+    _currentTarget=nil,
+    _silentTarget=nil,
+    _tpTool = nil,
+    _tpSelected = nil,
+    _tpToolActive = false,
+}
+
+local defaultState = HttpService:JSONEncode(State)
+State.SavedSnapshot = defaultState
+
+--// ORIGINAIS
+local Orig = {
+    WalkSpeed=16, JumpPower=50,
+    Gravity=workspace.Gravity,
+    CameraFov=(Camera and Camera.FieldOfView) or 70,
+    Brightness=Lighting.Brightness, Ambient=Lighting.OutdoorAmbient,
+    Shadows=Lighting.GlobalShadows, FogEnd=Lighting.FogEnd,
+}
+pcall(function()
+    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+    if hum then
+        Orig.WalkSpeed = hum.WalkSpeed
+        Orig.JumpPower = hum.JumpPower
+    end
+end)
+
+--// HELPERS
+local function criar(cls, props)
+    local i = Instance.new(cls)
+    for k, v in pairs(props or {}) do i[k] = v end
+    return i
+end
+local function corner(i, r) return criar("UICorner", {CornerRadius=UDim.new(0,r or 8), Parent=i}) end
+local function stroke(i, c, t, tr) return criar("UIStroke", {Color=c or Cfg.Cores.Borda, Thickness=t or 1, Transparency=tr or 0, Parent=i}) end
+local function grad(i, c1, c2, rot) return criar("UIGradient", {Color=ColorSequence.new(c1,c2), Rotation=rot or 90, Parent=i}) end
+local function tw(i, t, p) TweenService:Create(i, TweenInfo.new(t, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), p):Play() end
+
+local function notificar(txt, tipo)
+    if not State.Notifications and tipo ~= "key" then return end
+    local sg = CoreGui:FindFirstChild("DeltaHubNotif")
+    if not sg then
+        sg = criar("ScreenGui", {Name="DeltaHubNotif", ResetOnSpawn=false, IgnoreGuiInset=true, DisplayOrder=100, Parent=CoreGui})
+    end
+    local corFundo, icone
+    if tipo == "erro" then corFundo, icone = Cfg.Cores.Vermelho, "✕ "
+    elseif tipo == "aviso" then corFundo, icone = Cfg.Cores.Amarelo, "⚠ "
+    else corFundo, icone = Cfg.Cores.Destaque, "✓ " end
+    local lbl = criar("TextLabel", {
+        Size = UDim2.fromOffset(240, 36),
+        Position = UDim2.new(0.5, -120, 0, -60),
+        BackgroundColor3 = corFundo,
+        Text = icone .. txt,
+        TextColor3 = Color3.new(1,1,1),
+        Font = Cfg.FonteBold, TextSize = 13,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        Parent = sg,
+    })
+    corner(lbl, 9)
+    stroke(lbl, Color3.new(1,1,1), 1, 0.85)
+    tw(lbl, 0.3, {Position = UDim2.new(0.5, -120, 0, 24)})
+    task.delay(2.4, function()
+        if lbl and lbl.Parent then
+            tw(lbl, 0.3, {Position = UDim2.new(0.5, -120, 0, -60)})
+            task.wait(0.35)
+            if lbl then lbl:Destroy() end
+        end
+    end)
+end
+
+--// FORWARD DECLARATIONS
+local iniciarAutoJump, pararAutoJump, iniciarJJ
+local aplicarWalkSpeed, aplicarJumpPower, aplicarSprint
+local aplicarAntiLag, aplicarFpsBoost, aplicarPerformanceMode
+local aplicarReduceEffects, aplicarReduceParticles
+local aplicarEstadoCompleto, LimparESP, getHumanoid
+local LimparTPTool, criarTPTool
+
+--// LÓGICA BASE
+function getHumanoid()
+    local ch = LocalPlayer.Character
+    if not ch then return nil end
+    return ch:FindFirstChildOfClass("Humanoid")
+end
+
+local function getHRP()
+    local ch = LocalPlayer.Character
+    if not ch then return nil end
+    return ch:FindFirstChild("HumanoidRootPart")
+end
+
+local autoJumpConn
+function iniciarAutoJump()
+    if autoJumpConn then return end
+    autoJumpConn = RunService.Heartbeat:Connect(function()
+        local hum = getHumanoid()
+        if hum and hum.MoveDirection.Magnitude > 0 then
+            if hum:GetState() ~= Enum.HumanoidStateType.Jumping then
+                hum.Jump = true
+            end
+        end
+    end)
+end
+function pararAutoJump()
+    if autoJumpConn then autoJumpConn:Disconnect(); autoJumpConn = nil end
+end
+
+function iniciarJJ()
+    task.spawn(function()
+        while State.JJEnabled do
+            local hum = getHumanoid()
+            if hum then
+                if State.JJAj and hum.MoveDirection.Magnitude > 0 then hum.Jump = true end
+                if State.JJSprint and hum.WalkSpeed < 24 then hum.WalkSpeed = 24 end
+            end
+            task.wait(math.max(State.JJDelay, State.JJInterval * 0.2))
+        end
+    end)
+end
+
+function aplicarWalkSpeed()
+    local hum = getHumanoid()
+    if hum and State.WalkSpeedOn then hum.WalkSpeed = State.WalkSpeed end
+end
+function aplicarJumpPower()
+    local hum = getHumanoid()
+    if hum and State.JumpPowerOn then
+        hum.UseJumpPower = true
+        hum.JumpPower = State.JumpPower
+    end
+end
+function aplicarSprint(v)
+    local hum = getHumanoid()
+    if not hum then return end
+    if v and hum.WalkSpeed < 24 then hum.WalkSpeed = 24 end
+end
+
+local antiLagCache = {}
+function aplicarAntiLag(v)
+    if v then
+        antiLagCache.brightness = Lighting.Brightness
+        antiLagCache.ambient    = Lighting.OutdoorAmbient
+        antiLagCache.shadows    = Lighting.GlobalShadows
+        antiLagCache.fog        = Lighting.FogEnd
+        Lighting.Brightness = 1
+        Lighting.OutdoorAmbient = Color3.fromRGB(90,90,90)
+        Lighting.GlobalShadows = false
+        Lighting.FogEnd = 10000
+    else
+        if antiLagCache.brightness then Lighting.Brightness = antiLagCache.brightness end
+        if antiLagCache.ambient then Lighting.OutdoorAmbient = antiLagCache.ambient end
+        if antiLagCache.shadows ~= nil then Lighting.GlobalShadows = antiLagCache.shadows end
+        if antiLagCache.fog then Lighting.FogEnd = antiLagCache.fog end
+    end
+end
+
+local fpsBoostConn
+function aplicarFpsBoost(v)
+    if v then
+        State.ReduceEffects = true; State.ReduceParticles = true
+        aplicarReduceEffects(true); aplicarReduceParticles(true)
+        if not fpsBoostConn then
+            fpsBoostConn = RunService.Heartbeat:Connect(function()
+                if not State.FpsBoost then return end
+                pcall(function()
+                    if settings and settings.Rendering then
+                        settings.Rendering.QualityLevel = Enum.QualityLevel.Level01
+                    end
+                end)
+                for _, l in ipairs(Lighting:GetChildren()) do
+                    if l:IsA("Light") then l.Shadows = false end
+                end
+            end)
+        end
+    else
+        State.ReduceEffects = false; State.ReduceParticles = false
+        if fpsBoostConn then fpsBoostConn:Disconnect(); fpsBoostConn = nil end
+        pcall(function()
+            if settings and settings.Rendering then
+                settings.Rendering.QualityLevel = Enum.QualityLevel.Automatic
+            end
+        end)
+    end
+end
+
+local effectsCache = {}
+function aplicarReduceEffects(v)
+    if v then
+        for _, d in ipairs(Lighting:GetDescendants()) do
+            if d:IsA("ParticleEmitter") then
+                effectsCache[d] = {Enabled=d.Enabled, Rate=d.Rate}; d.Enabled = false
+            elseif d:IsA("Trail") or d:IsA("Beam") or d:IsA("Fire") or d:IsA("Smoke") or d:IsA("Sparkles") then
+                effectsCache[d] = {Enabled=d.Enabled}; d.Enabled = false
+            end
+        end
+    else
+        for d, c in pairs(effectsCache) do
+            if d and d.Parent then
+                pcall(function()
+                    if c.Enabled ~= nil then d.Enabled = c.Enabled end
+                    if c.Rate ~= nil and d:IsA("ParticleEmitter") then d.Rate = c.Rate end
+                end)
+            end
+        end
+        effectsCache = {}
+    end
+end
+
+local particlesCache = {}
+function aplicarReduceParticles(v)
+    if v then
+        for _, d in ipairs(workspace:GetDescendants()) do
+            if d:IsA("ParticleEmitter") then
+                particlesCache[d] = {Enabled=d.Enabled, Rate=d.Rate}; d.Enabled = false
+            end
+        end
+    else
+        for d, c in pairs(particlesCache) do
+            if d and d.Parent then
+                pcall(function() d.Enabled = c.Enabled; d.Rate = c.Rate end)
+            end
+        end
+        particlesCache = {}
+    end
+end
+
+function aplicarPerformanceMode(v)
+    pcall(function()
+        if settings and settings.Rendering then
+            settings.Rendering.QualityLevel = v and Enum.QualityLevel.Level01 or Enum.QualityLevel.Automatic
+        end
+    end)
+end
+
+--// TP TOOL
+function LimparTPTool()
+    State._tpToolActive = false
+    State._tpTool = nil
+    local backpack = LocalPlayer:FindFirstChildOfClass("Backpack")
+    if backpack then
+        for _, item in ipairs(backpack:GetChildren()) do
+            if item:IsA("Tool") and item.Name == "DeltaTPTool" then
+                pcall(function() item:Destroy() end)
+            end
+        end
+    end
+    local char = LocalPlayer.Character
+    if char then
+        for _, item in ipairs(char:GetChildren()) do
+            if item:IsA("Tool") and item.Name == "DeltaTPTool" then
+                pcall(function() item:Destroy() end)
+            end
+        end
+    end
+end
+
+function criarTPTool()
+    local backpack = LocalPlayer:FindFirstChildOfClass("Backpack")
+    if not backpack then
+        notificar("Backpack não encontrado", "erro")
+        return nil
+    end
+    for _, item in ipairs(backpack:GetChildren()) do
+        if item:IsA("Tool") and item.Name == "DeltaTPTool" then
+            State._tpTool = item; State._tpToolActive = true
+            return item
+        end
+    end
+    local char = LocalPlayer.Character
+    if char then
+        for _, item in ipairs(char:GetChildren()) do
+            if item:IsA("Tool") and item.Name == "DeltaTPTool" then
+                State._tpTool = item; State._tpToolActive = true
+                return item
+            end
+        end
+    end
+
+    local tool = Instance.new("Tool")
+    tool.Name = "DeltaTPTool"
+    tool.RequiresHandle = true
+    tool.CanBeDropped = false
+    tool.ToolTip = "Clique/toque no mapa para teleportar"
+
+    local handle = Instance.new("Part")
+    handle.Name = "Handle"
+    handle.Size = Vector3.new(0.1, 0.1, 0.1)
+    handle.Transparency = 1
+    handle.CanCollide = false
+    handle.Massless = true
+    handle.Parent = tool
+
+    tool.Activated:Connect(function()
+        if not State._tpToolActive then return end
+        if not Camera then return end
+        local mouse = LocalPlayer:GetMouse()
+        if not mouse then notificar("Destino inválido", "aviso"); return end
+        local alvo = mouse.Hit
+        if not alvo then notificar("Destino inválido", "aviso"); return end
+        local destino = alvo.Position
+        if destino.Magnitude > 1e5 or destino.Y ~= destino.Y then
+            notificar("Destino inválido", "aviso"); return
+        end
+        local hrp = getHRP()
+        if not hrp then notificar("Personagem não encontrado", "erro"); return end
+        hrp.CFrame = CFrame.new(destino + Vector3.new(0, 3, 0))
+        notificar("Teleportado!", "ok")
+    end)
+
+    tool.Parent = backpack
+    State._tpTool = tool
+    State._tpToolActive = true
+    return tool
+end
+
+LocalPlayer.ChildAdded:Connect(function(child)
+    if child:IsA("Tool") and child.Name == "DeltaTPTool" then
+        State._tpTool = child
+    end
+end)
+
+function aplicarEstadoCompleto()
+    pcall(function()
+        aplicarWalkSpeed(); aplicarJumpPower()
+        workspace.Gravity = State.GravityOn and State.Gravity or Orig.Gravity
+        if Camera then Camera.FieldOfView = State.CameraFovOn and State.CameraFov or Orig.CameraFov end
+        aplicarSprint(State.Sprint)
+        aplicarAntiLag(State.AntiLag); aplicarFpsBoost(State.FpsBoost)
+        aplicarPerformanceMode(State.PerfMode)
+        if State.AutoJump or State.ParkourAutoJump then iniciarAutoJump() else pararAutoJump() end
+        if State.JJEnabled then iniciarJJ() end
+        if State._tpToolActive then criarTPTool() end
+    end)
+end
+
+--// SISTEMA DE MIRA
+local function obterParteAlvo(char, parte)
+    if not char then return nil end
+    if parte == "Cabeça" then
+        return char:FindFirstChild("Head")
+    else
+        return char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
+    end
+end
+
+local function obterCentroFov()
+    if not Camera then return nil, nil end
+    local vp = Camera.ViewportSize
+    local centro = Vector2.new(vp.X/2, vp.Y * State.FovPosY)
+    local raio = State.FovSize / 2
+    return centro, raio
+end
+
+local function alvoValido(plr, parteNome, distanciaMax, teamCheck, fovCentro, fovRaio)
+    if not plr or plr == LocalPlayer then return nil end
+    local char = plr.Character
+    if not char then return nil end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if not hum or hum.Health <= 0 then return nil end
+    if teamCheck and LocalPlayer.Team and plr.Team == LocalPlayer.Team then return nil end
+    local parte = obterParteAlvo(char, parteNome)
+    if not parte then return nil end
+    local posParte = parte.Position
+    local raiz = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    local origem = raiz and raiz.Position or (Camera and Camera.CFrame.Position) or Vector3.zero
+    local dist = (posParte - origem).Magnitude
+    if dist > distanciaMax then return nil end
+    if fovCentro and fovRaio then
+        local ponto2D, onScreen = Camera:WorldToViewportPoint(posParte)
+        if not onScreen then return nil end
+        local dx = ponto2D.X - fovCentro.X
+        local dy = ponto2D.Y - fovCentro.Y
+        local distTela = math.sqrt(dx*dx + dy*dy)
+        if distTela > fovRaio then return nil end
+        return {plr=plr, char=char, hum=hum, parte=parte, pos=posParte, dist=dist, distTela=distTela, ponto2D=ponto2D}
+    end
+    return {plr=plr, char=char, hum=hum, parte=parte, pos=posParte, dist=dist}
+end
+
+local function encontrarMelhorAlvo(parteNome, distanciaMax, teamCheck, selecao)
+    local centro, raio = obterCentroFov()
+    local melhor = nil
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer then
+            local dados = alvoValido(plr, parteNome, distanciaMax, teamCheck, centro, raio)
+            if dados then
+                local criterio = (selecao == "Cruz") and (dados.distTela or 99999) or dados.dist
+                if not melhor or criterio < melhor.criterio then
+                    melhor = dados
+                    melhor.criterio = criterio
+                end
+            end
+        end
+    end
+    return melhor
+end
+
+RunService.RenderStepped:Connect(function(dt)
+    if not Camera then return end
+    if State.Aimbot then
+        local atual = State._currentTarget
+        local revalidar = true
+        if atual and atual.plr and atual.plr.Parent and atual.char and atual.char.Parent then
+            local centro, raio = obterCentroFov()
+            local dados = alvoValido(atual.plr, State.TargetPart, State.TargetDistance, State.TeamCheck, centro, raio)
+            if dados then
+                State._currentTarget = dados
+                revalidar = false
+            end
+        end
+        if revalidar then
+            if State.TargetLock then
+                State._currentTarget = nil
+            else
+                State._currentTarget = encontrarMelhorAlvo(State.TargetPart, State.TargetDistance, State.TeamCheck, State.TargetSelection)
+            end
+        end
+        local alvo = State._currentTarget
+        if alvo and alvo.parte and alvo.parte.Parent then
+            local destino = CFrame.new(Camera.CFrame.Position, alvo.parte.Position)
+            local smoothing = math.clamp(State.AimSmoothing / 100, 0.01, 1)
+            local fator = 1 - math.pow(smoothing, dt * 60)
+            fator = math.clamp(fator, 0.02, 1)
+            Camera.CFrame = Camera.CFrame:Lerp(destino, fator)
+        end
+    else
+        State._currentTarget = nil
+    end
+    if State.SilentAim then
+        State._silentTarget = encontrarMelhorAlvo(State.SilentTarget, State.SilentDistance, State.SilentTeamCheck, "Cruz")
+    else
+        State._silentTarget = nil
+    end
+end)
+
+--// TELA DE CARREGAMENTO
+local loading = criar("ScreenGui", {Name="DeltaHubLoading", ResetOnSpawn=false, IgnoreGuiInset=true, DisplayOrder=200, Parent=CoreGui})
+local loadBg = criar("Frame", {Size=UDim2.fromScale(1,1), BackgroundColor3=Cfg.Cores.Fundo, BorderSizePixel=0, Parent=loading})
+local loadCard = criar("Frame", {Size=UDim2.fromOffset(300,150), Position=UDim2.fromScale(0.5,0.5), AnchorPoint=Vector2.new(0.5,0.5), BackgroundColor3=Cfg.Cores.Painel, BorderSizePixel=0, Parent=loadBg})
+corner(loadCard, 14); stroke(loadCard)
+local loadT = criar("TextLabel", {Size=UDim2.new(1,0,0,
