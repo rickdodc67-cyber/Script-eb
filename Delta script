@@ -1154,3 +1154,288 @@ do
     end
 
     local wrapTPBtns = criar("Frame", {Size = UDim2.new(1, 0, 0, 32), BackgroundTransparency = 1, Layou
+local wrapTPBtns = criar("Frame", {Size = UDim2.new(1, 0, 0, 32), BackgroundTransparency = 1, LayoutOrder = 3, Parent = cTP})
+local bTeleportar = criar("TextButton", {Size = UDim2.new(0.68, -3, 1, 0), BackgroundColor3 = Cfg.Cores.Destaque, Text = "Teleportar", TextColor3 = Color3.new(1,1,1), Font = Cfg.FonteBold, TextSize = 12, AutoButtonColor = false, Parent = wrapTPBtns})
+corner(bTeleportar, 7)
+local bRefresh = criar("TextButton", {Size = UDim2.new(0.32, -3, 1, 0), Position = UDim2.new(0.68, 3, 0, 0), BackgroundColor3 = Cfg.Cores.Painel3, Text = "Refresh", TextColor3 = Cfg.Cores.Texto, Font = Cfg.FonteBold, TextSize = 12, AutoButtonColor = false, Parent = wrapTPBtns})
+corner(bRefresh, 7)
+
+bTeleportar.MouseButton1Click:Connect(function()
+    local plr = State._tpSelected
+    if not plr or not plr.Parent then
+        notificar("Selecione um jogador válido", "aviso")
+        return
+    end
+    local char = plr.Character
+    local hrpAlvo = char and char:FindFirstChild("HumanoidRootPart")
+    if not hrpAlvo then
+        notificar("Jogador inválido", "erro")
+        return
+    end
+    local hrp = getHRP()
+    if not hrp then
+        notificar("Personagem não encontrado", "erro")
+        return
+    end
+    hrp.CFrame = hrpAlvo.CFrame + Vector3.new(0, 0, 2)
+    notificar("Teleportado para "..plr.Name, "ok")
+end)
+
+bRefresh.MouseButton1Click:Connect(function()
+    atualizarListaJogadores()
+    notificar("Lista atualizada", "ok")
+end)
+
+atualizarListaJogadores()
+toolsRefs.atualizarListaJogadores = atualizarListaJogadores
+
+Players.PlayerAdded:Connect(function()
+    task.wait(0.2)
+    if toolsRefs.atualizarListaJogadores then
+        toolsRefs.atualizarListaJogadores()
+    end
+end)
+
+Players.PlayerRemoving:Connect(function(plr)
+    if State._tpSelected == plr then
+        State._tpSelected = nil
+    end
+    task.wait(0.1)
+    if toolsRefs.atualizarListaJogadores then
+        toolsRefs.atualizarListaJogadores()
+    end
+end)
+
+local cTool = cardCategoria("TP TOOL", pagTools)
+local toolsStatusLabel = criar("TextLabel", {
+    Size = UDim2.new(1, 0, 0, 18),
+    BackgroundTransparency = 1,
+    Text = "Status: Desativada",
+    TextColor3 = Cfg.Cores.TextoSec,
+    Font = Cfg.Fonte,
+    TextSize = 12,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    LayoutOrder = 1,
+    Parent = cTool,
+})
+
+toggle(cTool, "TP Tool", false, 2, function(v)
+    if v then
+        local t = criarTPTool()
+        if t then
+            toolsStatusLabel.Text = "Status: Ativa"
+            toolsStatusLabel.TextColor3 = Cfg.Cores.Verde
+            notificar("TP Tool ativada", "ok")
+            local hum = getHumanoid()
+            if hum then
+                pcall(function()
+                    hum:EquipTool(t)
+                end)
+            end
+        else
+            toolsStatusLabel.Text = "Status: Falha ao criar"
+            toolsStatusLabel.TextColor3 = Cfg.Cores.Vermelho
+        end
+    else
+        LimparTPTool()
+        toolsStatusLabel.Text = "Status: Desativada"
+        toolsStatusLabel.TextColor3 = Cfg.Cores.TextoSec
+        notificar("TP Tool desativada", "ok")
+    end
+end)
+
+local wrapUnequip = criar("Frame", {
+    Size = UDim2.new(1, 0, 0, 32),
+    BackgroundTransparency = 1,
+    LayoutOrder = 3,
+    Parent = cTool,
+})
+local bUnequip = criar("TextButton", {
+    Size = UDim2.new(1, 0, 1, 0),
+    BackgroundColor3 = Cfg.Cores.Painel3,
+    Text = "Unequip Tool",
+    TextColor3 = Cfg.Cores.Texto,
+    Font = Cfg.FonteBold,
+    TextSize = 12,
+    AutoButtonColor = false,
+    Parent = wrapUnequip,
+})
+corner(bUnequip, 7)
+bUnequip.MouseButton1Click:Connect(function()
+    local hum = getHumanoid()
+    if hum then
+        pcall(function()
+            hum:UnequipTools()
+        end)
+    end
+    notificar("Ferramenta desequipada", "ok")
+end)
+
+LocalPlayer.CharacterAdded:Connect(function()
+    task.wait(1)
+    if State._tpToolActive then
+        State._tpTool = nil
+        criarTPTool()
+    end
+end)
+end
+
+-- SIDEBAR
+local botoesSidebar = {}
+local abas = {"Informações","Status","Aimbot","Parkour","Auto JJ's","Misc","FPS","Tools"}
+for i, nome in ipairs(abas) do
+    local btn = criar("TextButton", {
+        Size = UDim2.new(1, 0, 0, 30),
+        BackgroundColor3 = Cfg.Cores.Painel2,
+        Text = nome,
+        TextColor3 = Cfg.Cores.TextoSec,
+        Font = Cfg.Fonte,
+        TextSize = 11,
+        AutoButtonColor = false,
+        LayoutOrder = i,
+        Parent = sidebar,
+    })
+    corner(btn, 7)
+    btn.MouseEnter:Connect(function()
+        if not btn:GetAttribute("ativo") then
+            tw(btn, 0.15, {BackgroundColor3 = Cfg.Cores.Painel3})
+        end
+    end)
+    btn.MouseLeave:Connect(function()
+        if not btn:GetAttribute("ativo") then
+            tw(btn, 0.15, {BackgroundColor3 = Cfg.Cores.Painel2})
+        end
+    end)
+    btn.MouseButton1Click:Connect(function()
+        for _, b in pairs(botoesSidebar) do
+            b:SetAttribute("ativo", false)
+            tw(b, 0.15, {BackgroundColor3 = Cfg.Cores.Painel2, TextColor3 = Cfg.Cores.TextoSec})
+        end
+        btn:SetAttribute("ativo", true)
+        tw(btn, 0.15, {BackgroundColor3 = Cfg.Cores.Destaque2, TextColor3 = Color3.new(1,1,1)})
+        mostrarPagina(nome)
+    end)
+    botoesSidebar[nome] = btn
+end
+botoesSidebar["Informações"]:SetAttribute("ativo", true)
+botoesSidebar["Informações"].BackgroundColor3 = Cfg.Cores.Destaque2
+botoesSidebar["Informações"].TextColor3 = Color3.new(1,1,1)
+mostrarPagina("Informações")
+
+-- LOOP DE ESTATÍSTICAS
+local sessionStart = tick()
+local frames, fpsAcc = 0, 0
+RunService.Heartbeat:Connect(function(dt)
+    frames = frames + 1
+    fpsAcc = fpsAcc + dt
+    if fpsAcc >= 1 then
+        local fps = math.floor(frames/fpsAcc)
+        frames = 0
+        fpsAcc = 0
+        if statusRefs.FPS then
+            statusRefs.FPS.Text = tostring(fps)
+        end
+        if fpsRefs.FPS then
+            fpsRefs.FPS.Text = tostring(fps)
+        end
+        local ping = 0
+        if Stats then
+            pcall(function()
+                ping = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())
+            end)
+        end
+        if statusRefs.Ping then
+            statusRefs.Ping.Text = ping.." ms"
+        end
+        if fpsRefs.Ping then
+            fpsRefs.Ping.Text = ping.." ms"
+        end
+        local qtd = #Players:GetPlayers()
+        if statusRefs.Players then
+            statusRefs.Players.Text = tostring(qtd)
+        end
+        if fpsRefs.Players then
+            fpsRefs.Players.Text = tostring(qtd)
+        end
+        local s = math.floor(tick() - sessionStart)
+        local txt = string.format("%02d:%02d", math.floor(s/60), s%60)
+        if statusRefs.Session then
+            statusRefs.Session.Text = txt
+        end
+        if fpsRefs.Session then
+            fpsRefs.Session.Text = txt
+        end
+        if fpsRefs.PerfLbl then
+            local nivel, cor
+            if fps >= 45 then
+                nivel, cor = "GOOD", Cfg.Cores.Verde
+            elseif fps >= 25 then
+                nivel, cor = "MEDIUM", Cfg.Cores.Amarelo
+            else
+                nivel, cor = "LOW", Cfg.Cores.Vermelho
+            end
+            fpsRefs.PerfLbl.Text = "Performance: "..nivel
+            fpsRefs.PerfLbl.TextColor3 = cor
+        end
+    end
+end)
+
+if LocalPlayer then
+    LocalPlayer.CharacterAdded:Connect(function()
+        task.wait(1)
+        if State.WalkSpeedOn then aplicarWalkSpeed() end
+        if State.JumpPowerOn then aplicarJumpPower() end
+        if State.CameraFovOn and Camera then
+            Camera.FieldOfView = State.CameraFov
+        end
+        if State.Sprint then aplicarSprint(true) end
+    end)
+end
+
+-- KEY SYSTEM LOGIC
+local function validarKey()
+    local texto = (keyInput.Text or ""):gsub("%s", "")
+    if texto == Cfg.Key then
+        State.KeyValidated = true
+        keyStatusLbl.Text = "Access Granted"
+        keyStatusLbl.TextColor3 = Cfg.Cores.Verde
+        notificar("Key validada!", "ok")
+        task.wait(0.7)
+        tw(keyCard, 0.3, {BackgroundTransparency=1})
+        tw(keyBg, 0.3, {BackgroundTransparency=1})
+        task.wait(0.32)
+        keyGui:Destroy()
+        abrir()
+        notificar("Delta Hub pronto", "ok")
+    else
+        keyStatusLbl.Text = "Invalid Key"
+        keyStatusLbl.TextColor3 = Cfg.Cores.Vermelho
+        notificar("Key inválida", "erro")
+        local originalX = keyCard.Position.X.Offset
+        for i = 1, 3 do
+            tw(keyCard, 0.05, {Position = UDim2.new(keyCard.Position.X.Scale, originalX - 6, keyCard.Position.Y.Scale, keyCard.Position.Y.Offset)})
+            task.wait(0.06)
+            tw(keyCard, 0.05, {Position = UDim2.new(keyCard.Position.X.Scale, originalX + 6, keyCard.Position.Y.Scale, keyCard.Position.Y.Offset)})
+            task.wait(0.06)
+        end
+        tw(keyCard, 0.05, {Position = UDim2.new(keyCard.Position.X.Scale, originalX, keyCard.Position.Y.Scale, keyCard.Position.Y.Offset)})
+    end
+end
+btnVerificar.MouseButton1Click:Connect(validarKey)
+keyInput.FocusLost:Connect(function(enter)
+    if enter then validarKey() end
+end)
+
+UserInputService.InputBegan:Connect(function(input, processed)
+    if processed then return end
+    if input.KeyCode == Enum.KeyCode.RightShift then
+        if not State.KeyValidated then return end
+        if principal.Visible then
+            minimizar()
+        else
+            abrir()
+        end
+    end
+end)
+
+print("[Delta Hub v"..Cfg.Versao.."] Key: "..Cfg.Key)
