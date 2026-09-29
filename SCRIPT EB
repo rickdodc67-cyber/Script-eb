@@ -3,6 +3,7 @@
     Discord: https://discord.gg/fmznbXuRXZ
     Key: Delta
     Ambiente de teste/desenvolvimento autorizado
+    (Parte 1/3 — não execute sozinha)
 ]]
 
 --// SERVIÇOS
@@ -529,11 +530,626 @@ RunService.RenderStepped:Connect(function(dt)
     else
         State._silentTarget = nil
     end
-end)
-
---// TELA DE CARREGAMENTO
+end)--// TELA DE CARREGAMENTO
 local loading = criar("ScreenGui", {Name="DeltaHubLoading", ResetOnSpawn=false, IgnoreGuiInset=true, DisplayOrder=200, Parent=CoreGui})
 local loadBg = criar("Frame", {Size=UDim2.fromScale(1,1), BackgroundColor3=Cfg.Cores.Fundo, BorderSizePixel=0, Parent=loading})
 local loadCard = criar("Frame", {Size=UDim2.fromOffset(300,150), Position=UDim2.fromScale(0.5,0.5), AnchorPoint=Vector2.new(0.5,0.5), BackgroundColor3=Cfg.Cores.Painel, BorderSizePixel=0, Parent=loadBg})
 corner(loadCard, 14); stroke(loadCard)
-local loadT = criar("TextLabel", {Size=UDim2.new(1,0,0,
+local loadT = criar("TextLabel", {Size=UDim2.new(1,0,0,40), Position=UDim2.new(0,0,0,20), BackgroundTransparency=1, Text="DELTA HUB", TextColor3=Cfg.Cores.Texto, Font=Cfg.FonteBold, TextSize=26, Parent=loadCard})
+grad(loadT, Cfg.Cores.Destaque, Cfg.Cores.DestaqueGlow, 90)
+criar("TextLabel", {Size=UDim2.new(1,0,0,18), Position=UDim2.new(0,0,0,62), BackgroundTransparency=1, Text="Carregando v"..Cfg.Versao.."...", TextColor3=Cfg.Cores.TextoSec, Font=Cfg.Fonte, TextSize=13, Parent=loadCard})
+local loadBarBg = criar("Frame", {Size=UDim2.new(0,230,0,6), Position=UDim2.new(0.5,0,0.75,0), AnchorPoint=Vector2.new(0.5,0.5), BackgroundColor3=Cfg.Cores.Painel3, BorderSizePixel=0, Parent=loadCard})
+corner(loadBarBg, 3)
+local loadBar = criar("Frame", {Size=UDim2.new(0,0,1,0), BackgroundColor3=Cfg.Cores.Destaque, BorderSizePixel=0, Parent=loadBarBg})
+corner(loadBar, 3); grad(loadBar, Cfg.Cores.Destaque, Cfg.Cores.DestaqueGlow, 0)
+tw(loadBar, 1.1, {Size=UDim2.new(1,0,1,0)})
+task.delay(1.4, function()
+    for _, o in ipairs({loadBg, loadCard, loadT, loadBarBg, loadBar}) do tw(o, 0.35, {BackgroundTransparency=1}) end
+    tw(loadT, 0.35, {TextTransparency=1})
+    task.wait(0.4)
+    loading:Destroy()
+end)
+task.wait(1.75)
+
+--// KEY SYSTEM
+local keyGui = criar("ScreenGui", {Name="DeltaHubKey", ResetOnSpawn=false, IgnoreGuiInset=true, DisplayOrder=150, Parent=CoreGui})
+local keyBg = criar("Frame", {Size=UDim2.fromScale(1,1), BackgroundColor3=Cfg.Cores.Fundo, BorderSizePixel=0, Parent=keyGui})
+local keyCard = criar("Frame", {Size=UDim2.fromOffset(340,260), Position=UDim2.fromScale(0.5,0.5), AnchorPoint=Vector2.new(0.5,0.5), BackgroundColor3=Cfg.Cores.Painel, BorderSizePixel=0, Parent=keyBg})
+corner(keyCard, 16); stroke(keyCard, Cfg.Cores.Borda, 1)
+local keyTop = criar("Frame", {Size=UDim2.new(1,0,0,90), BackgroundColor3=Cfg.Cores.Painel2, BorderSizePixel=0, Parent=keyCard})
+corner(keyTop, 16)
+criar("Frame", {Size=UDim2.new(1,0,0,16), Position=UDim2.new(0,0,1,-16), BackgroundColor3=Cfg.Cores.Painel2, BorderSizePixel=0, Parent=keyTop})
+criar("TextLabel", {Size=UDim2.new(1,0,0,34), Position=UDim2.new(0,0,0,18), BackgroundTransparency=1, Text="DELTA HUB", TextColor3=Cfg.Cores.Texto, Font=Cfg.FonteBold, TextSize=26, Parent=keyTop})
+local secureLbl = criar("TextLabel", {Size=UDim2.new(1,0,0,18), Position=UDim2.new(0,0,0,54), BackgroundTransparency=1, Text="SECURE ACCESS", TextColor3=Cfg.Cores.DestaqueGlow, Font=Cfg.FonteBold, TextSize=11, Parent=keyTop})
+grad(secureLbl, Cfg.Cores.Destaque, Cfg.Cores.DestaqueGlow, 0)
+criar("TextLabel", {Size=UDim2.new(1,0,0,16), Position=UDim2.new(0,20,0,104), BackgroundTransparency=1, Text="Digite sua chave de acesso:", TextColor3=Cfg.Cores.TextoSec, Font=Cfg.Fonte, TextSize=12, TextXAlignment=Enum.TextXAlignment.Left, Parent=keyCard})
+local keyInputBg = criar("Frame", {Size=UDim2.new(1,-40,0,40), Position=UDim2.new(0,20,0,124), BackgroundColor3=Cfg.Cores.Fundo, BorderSizePixel=0, Parent=keyCard})
+corner(keyInputBg, 9); stroke(keyInputBg, Cfg.Cores.Borda, 1)
+local keyInput = criar("TextBox", {
+    Size=UDim2.new(1,-20,1,0), Position=UDim2.new(0,10,0,0), BackgroundTransparency=1,
+    Text="", PlaceholderText="Digite a chave...", PlaceholderColor3=Cfg.Cores.TextoSec,
+    TextColor3=Cfg.Cores.Texto, Font=Cfg.Fonte, TextSize=14,
+    TextXAlignment=Enum.TextXAlignment.Left, ClearTextOnFocus=false, Parent=keyInputBg,
+})
+local btnVerificar = criar("TextButton", {Size=UDim2.new(1,-40,0,42), Position=UDim2.new(0,20,0,180), BackgroundColor3=Cfg.Cores.Destaque, Text="VERIFICAR", TextColor3=Color3.new(1,1,1), Font=Cfg.FonteBold, TextSize=14, AutoButtonColor=false, Parent=keyCard})
+corner(btnVerificar, 9); grad(btnVerificar, Cfg.Cores.Destaque, Cfg.Cores.Destaque2, 0)
+local keyStatusLbl = criar("TextLabel", {Size=UDim2.new(1,0,0,20), Position=UDim2.new(0,0,0,230), BackgroundTransparency=1, Text="", TextColor3=Cfg.Cores.TextoSec, Font=Cfg.FonteBold, TextSize=13, Parent=keyCard})
+
+--// UI PRINCIPAL
+local gui = criar("ScreenGui", {Name="DeltaHub", ResetOnSpawn=false, IgnoreGuiInset=true, ZIndexBehavior=Enum.ZIndexBehavior.Sibling, DisplayOrder=100, Parent=CoreGui})
+local principal = criar("Frame", {Size=UDim2.fromOffset(540,380), Position=UDim2.fromScale(0.5,0.5), AnchorPoint=Vector2.new(0.5,0.5), BackgroundColor3=Cfg.Cores.Fundo, BorderSizePixel=0, Visible=false, Parent=gui})
+corner(principal, 14); stroke(principal, Cfg.Cores.Borda, 1)
+
+local function ajustarTamanho()
+    if not Camera then return end
+    local vp = Camera.ViewportSize
+    local w = math.min(540, vp.X-20); local h = math.min(380, vp.Y-40)
+    principal.Size = UDim2.fromOffset(w*State.UIScale, h*State.UIScale)
+end
+ajustarTamanho()
+if Camera then Camera:GetPropertyChangedSignal("ViewportSize"):Connect(ajustarTamanho) end
+
+local topbar = criar("Frame", {Size=UDim2.new(1,0,0,40), BackgroundColor3=Cfg.Cores.Painel, BorderSizePixel=0, Parent=principal})
+corner(topbar, 14)
+criar("Frame", {Size=UDim2.new(1,0,0,14), Position=UDim2.new(0,0,1,-14), BackgroundColor3=Cfg.Cores.Painel, BorderSizePixel=0, Parent=topbar})
+local tituloTop = criar("TextLabel", {Size=UDim2.new(0,150,1,0), Position=UDim2.new(0,16,0,0), BackgroundTransparency=1, Text="DELTA HUB", TextColor3=Cfg.Cores.Texto, Font=Cfg.FonteBold, TextSize=14, TextXAlignment=Enum.TextXAlignment.Left, Parent=topbar})
+grad(tituloTop, Cfg.Cores.Destaque, Cfg.Cores.DestaqueGlow, 0)
+criar("TextLabel", {Size=UDim2.new(0,200,1,0), Position=UDim2.new(0,110,0,0), BackgroundTransparency=1, Text="•  v"..Cfg.Versao, TextColor3=Cfg.Cores.TextoSec, Font=Cfg.Fonte, TextSize=11, TextXAlignment=Enum.TextXAlignment.Left, Parent=topbar})
+local btnMin = criar("TextButton", {Size=UDim2.fromOffset(28,28), Position=UDim2.new(1,-66,0.5,-14), BackgroundColor3=Cfg.Cores.Painel3, Text="−", TextColor3=Cfg.Cores.TextoSec, Font=Cfg.FonteBold, TextSize=16, AutoButtonColor=false, Parent=topbar})
+corner(btnMin, 7)
+local btnFechar = criar("TextButton", {Size=UDim2.fromOffset(28,28), Position=UDim2.new(1,-34,0.5,-14), BackgroundColor3=Cfg.Cores.Painel3, Text="✕", TextColor3=Cfg.Cores.TextoSec, Font=Cfg.FonteBold, TextSize=12, AutoButtonColor=false, Parent=topbar})
+corner(btnFechar, 7)
+for _, b in ipairs({btnMin, btnFechar}) do
+    b.MouseEnter:Connect(function() tw(b,0.15,{BackgroundColor3=Cfg.Cores.Painel2}) end)
+    b.MouseLeave:Connect(function() tw(b,0.15,{BackgroundColor3=Cfg.Cores.Painel3}) end)
+end
+
+--// BOTÃO FLUTUANTE
+local floatGui = criar("ScreenGui", {Name="DeltaHubFloat", ResetOnSpawn=false, IgnoreGuiInset=true, DisplayOrder=120, Parent=CoreGui})
+local floatBtn = criar("TextButton", {Size=UDim2.fromOffset(54,54), Position=UDim2.new(0,20,0,120), BackgroundColor3=Cfg.Cores.Painel, Text="Δ", TextColor3=Cfg.Cores.Texto, Font=Cfg.FonteBold, TextSize=24, AutoButtonColor=false, Visible=false, Parent=floatGui})
+corner(floatBtn, 27)
+stroke(floatBtn, Cfg.Cores.Destaque, 2, 0.05)
+grad(floatBtn, Cfg.Cores.Destaque2, Cfg.Cores.Painel, 45)
+
+local function abrir()
+    principal.Visible = true
+    floatBtn.Visible = false
+    principal.BackgroundTransparency = 1
+    principal.Size = UDim2.fromOffset(0,0)
+    tw(principal, 0.3, {BackgroundTransparency=0})
+    ajustarTamanho()
+end
+local function minimizar()
+    tw(principal, 0.25, {BackgroundTransparency=1})
+    task.wait(0.22)
+    principal.Visible = false
+    if State.FloatPos then floatBtn.Position = State.FloatPos end
+    floatBtn.Visible = true
+end
+btnMin.MouseButton1Click:Connect(minimizar)
+btnFechar.MouseButton1Click:Connect(minimizar)
+floatBtn.MouseButton1Click:Connect(abrir)
+
+-- Drag do botão
+do
+    local dragging, startPos, startInput = false, nil, nil
+    floatBtn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true; startInput = input.Position; startPos = floatBtn.Position
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if not dragging then return end
+        if input.UserInputType ~= Enum.UserInputType.MouseMovement and input.UserInputType ~= Enum.UserInputType.Touch then return end
+        local delta = input.Position - startInput
+        floatBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end)
+    UserInputService.InputEnded:Connect(function(i)
+        if not dragging then return end
+        if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+            if not Camera then return end
+            local vp = Camera.ViewportSize
+            local abs = floatBtn.AbsolutePosition
+            local sz = floatBtn.AbsoluteSize
+            local x = math.clamp(abs.X, 4, vp.X - sz.X - 4)
+            local y = math.clamp(abs.Y, 4, vp.Y - sz.Y - 4)
+            floatBtn.Position = UDim2.fromOffset(x, y)
+            State.FloatPos = floatBtn.Position
+        end
+    end)
+end
+
+-- Drag da janela
+do
+    local dragging, startInput, startPos = false, nil, nil
+    topbar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true; startInput = input.Position; startPos = principal.Position
+        end
+    end)
+    topbar.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - startInput
+            principal.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    UserInputService.InputEnded:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then dragging = false end
+    end)
+end
+
+--// SIDEBAR + CONTEÚDO
+local sidebar = criar("Frame", {Size=UDim2.new(0,112,1,-52), Position=UDim2.new(0,10,0,46), BackgroundColor3=Cfg.Cores.Painel, BorderSizePixel=0, Parent=principal})
+corner(sidebar, 10); stroke(sidebar)
+criar("UIListLayout", {Padding=UDim.new(0,4), SortOrder=Enum.SortOrder.LayoutOrder, HorizontalAlignment=Enum.HorizontalAlignment.Center, Parent=sidebar})
+criar("UIPadding", {PaddingTop=UDim.new(0,8), PaddingLeft=UDim.new(0,6), PaddingRight=UDim.new(0,6), Parent=sidebar})
+
+local conteudo = criar("Frame", {Size=UDim2.new(1,-134,1,-52), Position=UDim2.new(0,128,0,46), BackgroundColor3=Cfg.Cores.Painel, BorderSizePixel=0, ClipsDescendants=true, Parent=principal})
+corner(conteudo, 10); stroke(conteudo)
+local scroll = criar("ScrollingFrame", {Size=UDim2.fromScale(1,1), BackgroundTransparency=1, BorderSizePixel=0, ScrollBarThickness=3, ScrollBarImageColor3=Cfg.Cores.Destaque, CanvasSize=UDim2.new(0,0,0,0), AutomaticCanvasSize=Enum.AutomaticSize.Y, Parent=conteudo})
+criar("UIPadding", {PaddingTop=UDim.new(0,12), PaddingLeft=UDim.new(0,12), PaddingRight=UDim.new(0,12), PaddingBottom=UDim.new(0,12), Parent=scroll})
+criar("UIListLayout", {Padding=UDim.new(0,10), SortOrder=Enum.SortOrder.LayoutOrder, Parent=scroll})
+
+local paginas = {}
+local function novaPagina(nome)
+    local p = criar("Frame", {Name=nome, Size=UDim2.new(1,0,0,0), AutomaticSize=Enum.AutomaticSize.Y, BackgroundTransparency=1, Visible=false, LayoutOrder=0, Parent=scroll})
+    criar("UIListLayout", {Padding=UDim.new(0,10), SortOrder=Enum.SortOrder.LayoutOrder, Parent=p})
+    paginas[nome] = p
+    return p
+end
+local function mostrarPagina(nome)
+    for n, p in pairs(paginas) do p.Visible = (n == nome) end
+    scroll.CanvasPosition = Vector2.new(0,0)
+end
+
+--// HELPERS DE UI
+local function cardCategoria(titulo, parent)
+    local c = criar("Frame", {Size=UDim2.new(1,0,0,0), AutomaticSize=Enum.AutomaticSize.Y, BackgroundColor3=Cfg.Cores.Painel2, BorderSizePixel=0, Parent=parent})
+    corner(c, 10); stroke(c)
+    criar("UIPadding", {PaddingTop=UDim.new(0,10), PaddingBottom=UDim.new(0,10), PaddingLeft=UDim.new(0,12), PaddingRight=UDim.new(0,12), Parent=c})
+    criar("UIListLayout", {Padding=UDim.new(0,8), SortOrder=Enum.SortOrder.LayoutOrder, Parent=c})
+    criar("TextLabel", {Size=UDim2.new(1,0,0,18), BackgroundTransparency=1, Text="◆ "..titulo, TextColor3=Cfg.Cores.DestaqueGlow, Font=Cfg.FonteBold, TextSize=11, TextXAlignment=Enum.TextXAlignment.Left, LayoutOrder=0, Parent=c})
+    return c
+end
+
+local function linhaLabel(parent, texto, ordem, cor)
+    return criar("TextLabel", {Size=UDim2.new(1,0,0,18), BackgroundTransparency=1, Text=texto, TextColor3=cor or Cfg.Cores.Texto, Font=Cfg.Fonte, TextSize=12, TextXAlignment=Enum.TextXAlignment.Left, LayoutOrder=ordem or 0, Parent=parent})
+end
+
+local function toggle(parent, texto, estadoInicial, ordem, callback)
+    local row = criar("Frame", {Size=UDim2.new(1,0,0,34), BackgroundTransparency=1, LayoutOrder=ordem or 0, Parent=parent})
+    criar("TextLabel", {Size=UDim2.new(1,-64,1,0), BackgroundTransparency=1, Text=texto, TextColor3=Cfg.Cores.Texto, Font=Cfg.Fonte, TextSize=13, TextXAlignment=Enum.TextXAlignment.Left, Parent=row})
+    local bg = criar("Frame", {Size=UDim2.fromOffset(46,24), Position=UDim2.new(1,-46,0.5,-12), BackgroundColor3=estadoInicial and Cfg.Cores.Destaque or Cfg.Cores.Painel3, BorderSizePixel=0, Parent=row})
+    corner(bg, 12)
+    local glow = stroke(bg, estadoInicial and Cfg.Cores.DestaqueGlow or Cfg.Cores.Borda, 1, estadoInicial and 0.3 or 0.7)
+    local knob = criar("Frame", {Size=UDim2.fromOffset(18,18), Position=estadoInicial and UDim2.new(1,-21,0.5,-9) or UDim2.new(0,3,0.5,-9), BackgroundColor3=Color3.new(1,1,1), BorderSizePixel=0, Parent=bg})
+    corner(knob, 9)
+    local estado = estadoInicial
+    local click = criar("TextButton", {Size=UDim2.fromScale(1,1), BackgroundTransparency=1, Text="", Parent=bg})
+    click.MouseButton1Click:Connect(function()
+        estado = not estado
+        tw(bg, 0.18, {BackgroundColor3 = estado and Cfg.Cores.Destaque or Cfg.Cores.Painel3})
+        tw(knob, 0.18, {Position = estado and UDim2.new(1,-21,0.5,-9) or UDim2.new(0,3,0.5,-9)})
+        glow.Color = estado and Cfg.Cores.DestaqueGlow or Cfg.Cores.Borda
+        glow.Transparency = estado and 0.3 or 0.7
+        if callback then pcall(callback, estado) end
+    end)
+    return { row=row }
+end
+
+local function slider(parent, texto, minV, maxV, padrao, ordem, callback, sufixo)
+    local row = criar("Frame", {Size=UDim2.new(1,0,0,42), BackgroundTransparency=1, LayoutOrder=ordem or 0, Parent=parent})
+    criar("TextLabel", {Size=UDim2.new(1,-60,0,16), BackgroundTransparency=1, Text=texto, TextColor3=Cfg.Cores.Texto, Font=Cfg.Fonte, TextSize=12, TextXAlignment=Enum.TextXAlignment.Left, Parent=row})
+    local valorTxt = criar("TextLabel", {Size=UDim2.fromOffset(60,16), Position=UDim2.new(1,-60,0,0), BackgroundTransparency=1, Text=tostring(padrao)..(sufixo or ""), TextColor3=Cfg.Cores.DestaqueGlow, Font=Cfg.FonteBold, TextSize=12, TextXAlignment=Enum.TextXAlignment.Right, Parent=row})
+    local barBg = criar("Frame", {Size=UDim2.new(1,0,0,6), Position=UDim2.new(0,0,0,26), BackgroundColor3=Cfg.Cores.Fundo, BorderSizePixel=0, Parent=row})
+    corner(barBg, 3)
+    local barFill = criar("Frame", {Size=UDim2.new((padrao-minV)/(maxV-minV),0,1,0), BackgroundColor3=Cfg.Cores.Destaque, BorderSizePixel=0, Parent=barBg})
+    corner(barFill, 3); grad(barFill, Cfg.Cores.Destaque, Cfg.Cores.DestaqueGlow, 0)
+    local knob = criar("Frame", {Size=UDim2.fromOffset(14,14), Position=UDim2.new(1,-7,0.5,-7), BackgroundColor3=Color3.new(1,1,1), BorderSizePixel=0, Parent=barFill})
+    corner(knob, 7); stroke(knob, Cfg.Cores.Destaque, 2)
+    local valor = padrao
+    local dragging = false
+    local function update(pct)
+        pct = math.clamp(pct, 0, 1)
+        valor = math.floor(minV + (maxV-minV)*pct + 0.5)
+        barFill.Size = UDim2.new(pct, 0, 1, 0)
+        valorTxt.Text = tostring(valor)..(sufixo or "")
+        if callback then pcall(callback, valor) end
+    end
+    local hit = criar("TextButton", {Size=UDim2.new(1,0,0,26), Position=UDim2.new(0,0,0,16), BackgroundTransparency=1, Text="", Parent=row})
+    local function processar(input)
+        local pct = (input.Position.X - barBg.AbsolutePosition.X) / barBg.AbsoluteSize.X
+        update(pct)
+    end
+    hit.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true; processar(input)
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            processar(input)
+        end
+    end)
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+    return { set = update, get = function() return valor end }
+end
+
+local function botao(parent, texto, ordem, callback, cor)
+    local b = criar("TextButton", {Size=UDim2.new(1,0,0,32), BackgroundColor3=cor or Cfg.Cores.Destaque, Text=texto, TextColor3=Color3.new(1,1,1), Font=Cfg.FonteBold, TextSize=12, AutoButtonColor=false, LayoutOrder=ordem or 0, Parent=parent})
+    corner(b, 7)
+    b.MouseButton1Click:Connect(function() pcall(callback) end)
+    return b
+end
+
+local function segmentado(parent, texto, opcoes, escolhido, ordem, callback)
+    local wrap = criar("Frame", {Size=UDim2.new(1,0,0,54), BackgroundTransparency=1, LayoutOrder=ordem or 0, Parent=parent})
+    criar("TextLabel", {Size=UDim2.new(1,0,0,16), BackgroundTransparency=1, Text=texto, TextColor3=Cfg.Cores.Texto, Font=Cfg.Fonte, TextSize=12, TextXAlignment=Enum.TextXAlignment.Left, Parent=wrap})
+    local row = criar("Frame", {Size=UDim2.new(1,0,0,30), Position=UDim2.new(0,0,0,20), BackgroundTransparency=1, Parent=wrap})
+    criar("UIListLayout", {FillDirection=Enum.FillDirection.Horizontal, Padding=UDim.new(0,6), SortOrder=Enum.SortOrder.LayoutOrder, Parent=row})
+    local btns = {}
+    for i, op in ipairs(opcoes) do
+        local b = criar("TextButton", {Size=UDim2.new(1/#opcoes, -((#opcoes-1)*6)/#opcoes, 1, 0), BackgroundColor3=(op==escolhido) and Cfg.Cores.Destaque2 or Cfg.Cores.Painel3, Text=op, TextColor3=(op==escolhido) and Color3.new(1,1,1) or Cfg.Cores.TextoSec, Font=(op==escolhido) and Cfg.FonteBold or Cfg.Fonte, TextSize=11, AutoButtonColor=false, LayoutOrder=i, Parent=row})
+        corner(b, 6)
+        b.MouseButton1Click:Connect(function()
+            for _, bb in pairs(btns) do
+                tw(bb, 0.15, {BackgroundColor3=Cfg.Cores.Painel3}); bb.TextColor3 = Cfg.Cores.TextoSec; bb.Font = Cfg.Fonte
+            end
+            tw(b, 0.15, {BackgroundColor3=Cfg.Cores.Destaque2}); b.TextColor3 = Color3.new(1,1,1); b.Font = Cfg.FonteBold
+            if callback then pcall(callback, op) end
+        end)
+        btns[op] = b
+    end
+    return wrap
+end
+
+local function seletorCor(parent, texto, corInicial, ordem, callback)
+    local wrap = criar("Frame", {Size=UDim2.new(1,0,0,40), BackgroundTransparency=1, LayoutOrder=ordem or 0, Parent=parent})
+    criar("TextLabel", {Size=UDim2.new(1,-60,0,16), BackgroundTransparency=1, Text=texto, TextColor3=Cfg.Cores.Texto, Font=Cfg.Fonte, TextSize=12, TextXAlignment=Enum.TextXAlignment.Left, Parent=wrap
+--// ABA: INFORMAÇÕES
+local pagInfo = novaPagina("Informações")
+do
+    local hero = criar("Frame", {Size=UDim2.new(1,0,0,130), BackgroundColor3=Cfg.Cores.Painel2, BorderSizePixel=0, LayoutOrder=0, Parent=pagInfo})
+    corner(hero, 12); stroke(hero); grad(hero, Cfg.Cores.Destaque2, Cfg.Cores.Painel2, 45)
+    criar("TextLabel", {Size=UDim2.new(1,0,0,44), Position=UDim2.new(0,0,0,24), BackgroundTransparency=1, Text="DELTA HUB", TextColor3=Cfg.Cores.Texto, Font=Cfg.FonteBold, TextSize=30, Parent=hero})
+    criar("TextLabel", {Size=UDim2.new(1,0,0,20), Position=UDim2.new(0,0,0,68), BackgroundTransparency=1, Text="By Eternal Studio 🇧🇷", TextColor3=Cfg.Cores.TextoSec, Font=Cfg.Fonte, TextSize=13, Parent=hero})
+    criar("TextLabel", {Size=UDim2.new(1,0,0,16), Position=UDim2.new(0,0,0,92), BackgroundTransparency=1, Text="v"..Cfg.Versao, TextColor3=Cfg.Cores.Azul, Font=Cfg.FonteBold, TextSize=11, Parent=hero})
+    local social = cardCategoria("COMUNIDADE", pagInfo)
+    linhaLabel(social, "Discord:", 1)
+    linhaLabel(social, Cfg.Discord, 2, Cfg.Cores.DestaqueGlow)
+    botao(social, "📋 COPIAR DISCORD", 3, function()
+        local ok = false
+        if setclipboard then pcall(function() setclipboard(Cfg.Discord); ok = true end) end
+        if not ok and toclipboard then pcall(function() toclipboard(Cfg.Discord); ok = true end) end
+        if ok then notificar("Discord copiado!", "ok") else notificar("Não foi possível copiar", "erro") end
+    end)
+    local info = cardCategoria("SOBRE", pagInfo)
+    linhaLabel(info, "Status do Hub: Online", 1, Cfg.Cores.Verde)
+    linhaLabel(info, "Versão: Atual", 2)
+    linhaLabel(info, "Desenvolvido por: Eternal Studio 🇧🇷", 3)
+end
+
+--// ABA: STATUS
+local pagStatus = novaPagina("Status")
+local statusRefs = {}
+do
+    local perf = cardCategoria("MONITOR", pagStatus)
+    local grid = criar("Frame", {Size=UDim2.new(1,0,0,88), BackgroundTransparency=1, LayoutOrder=1, Parent=perf})
+    criar("UIGridLayout", {CellSize=UDim2.new(0.5,-4,0,40), CellPadding=UDim2.new(0,8,0,8), SortOrder=Enum.SortOrder.LayoutOrder, Parent=grid})
+    local function statCard(titulo, valorInicial, cor)
+        local c = criar("Frame", {BackgroundColor3=Cfg.Cores.Painel3, BorderSizePixel=0, Parent=grid})
+        corner(c, 8)
+        criar("TextLabel", {Size=UDim2.new(1,-12,0,14), Position=UDim2.new(0,8,0,5), BackgroundTransparency=1, Text=titulo, TextColor3=Cfg.Cores.TextoSec, Font=Cfg.Fonte, TextSize=10, TextXAlignment=Enum.TextXAlignment.Left, Parent=c})
+        local v = criar("TextLabel", {Size=UDim2.new(1,-12,0,18), Position=UDim2.new(0,8,0,17), BackgroundTransparency=1, Text=valorInicial, TextColor3=cor or Cfg.Cores.Texto, Font=Cfg.FonteBold, TextSize=14, TextXAlignment=Enum.TextXAlignment.Left, Parent=c})
+        return v
+    end
+    statusRefs.FPS = statCard("FPS", "60", Cfg.Cores.Verde)
+    statusRefs.Ping = statCard("PING", "-- ms", Cfg.Cores.Azul)
+    statusRefs.Players = statCard("PLAYERS", tostring(#Players:GetPlayers()), Cfg.Cores.Destaque)
+    statusRefs.Session = statCard("SESSÃO", "00:00", Cfg.Cores.Amarelo)
+    local hub = cardCategoria("HUB", pagStatus)
+    linhaLabel(hub, "Status: Online", 1, Cfg.Cores.Verde)
+    linhaLabel(hub, "Interface: Carregada", 2, Cfg.Cores.Verde)
+    linhaLabel(hub, "Versão: Atual", 3, Cfg.Cores.Azul)
+    linhaLabel(hub, "Desempenho: Monitorado", 4, Cfg.Cores.TextoSec)
+end
+
+--// ABA: AIMBOT
+local pagAimbot = novaPagina("Aimbot")
+do
+    local c1 = cardCategoria("AIMBOT", pagAimbot)
+    toggle(c1, "Aimbot", State.Aimbot, 1, function(v) State.Aimbot = v; State._currentTarget = nil end)
+    toggle(c1, "FOV", State.FovEnabled, 2, function(v)
+        State.FovEnabled = v
+        fovCircle.Visible = v
+    end)
+    slider(c1, "FOV Size", 40, 400, State.FovSize, 3, function(v)
+        State.FovSize = v
+        fovCircle.Size = UDim2.fromOffset(v, v)
+    end)
+    segmentado(c1, "Target Part", {"Cabeça","Peito"}, State.TargetPart, 4, function(op) State.TargetPart = op end)
+    local c2 = cardCategoria("SELEÇÃO", pagAimbot)
+    toggle(c2, "Team Check", State.TeamCheck, 1, function(v) State.TeamCheck = v; State._currentTarget = nil end)
+    slider(c2, "Target Distance", 50, 1000, State.TargetDistance, 2, function(v) State.TargetDistance = v end)
+    segmentado(c2, "Target Selection", {"Cruz","Jogador"}, State.TargetSelection, 3, function(op) State.TargetSelection = op end)
+    local c3 = cardCategoria("SUAVIZAÇÃO", pagAimbot)
+    slider(c3, "Aim Smoothing", 1, 100, State.AimSmoothing, 1, function(v) State.AimSmoothing = v end)
+    toggle(c3, "Target Lock", State.TargetLock, 2, function(v) State.TargetLock = v end)
+    local c4 = cardCategoria("FOV POSITION", pagAimbot)
+    segmentado(c4, "Posição", {"Center","Custom"}, State.FovPosition, 1, function(op) State.FovPosition = op end)
+    slider(c4, "Vertical Position", 30, 90, math.floor(State.FovPosY*100), 2, function(v)
+        State.FovPosY = v / 100
+        atualizarFovPos()
+    end, "%")
+    local c5 = cardCategoria("SILENT AIM", pagAimbot)
+    toggle(c5, "Silent Aim", State.SilentAim, 1, function(v) State.SilentAim = v; State._silentTarget = nil end)
+    segmentado(c5, "Target Part", {"Cabeça","Peito"}, State.SilentTarget, 2, function(op) State.SilentTarget = op end)
+    slider(c5, "FOV", 40, 400, State.SilentFov, 3, function(v) State.SilentFov = v end)
+    slider(c5, "Distance", 50, 1000, State.SilentDistance, 4, function(v) State.SilentDistance = v end)
+    toggle(c5, "Team Check", State.SilentTeamCheck, 5, function(v) State.SilentTeamCheck = v; State._silentTarget = nil end)
+end
+
+--// ABA: PARKOUR
+local pagParkour = novaPagina("Parkour")
+do
+    local c = cardCategoria("PARKOUR", pagParkour)
+    toggle(c, "Auto Jump", State.ParkourAutoJump, 1, function(v)
+        State.ParkourAutoJump = v
+        if v then iniciarAutoJump() else pararAutoJump() end
+    end)
+    toggle(c, "Sprint", State.ParkourSprint, 2, function(v)
+        State.ParkourSprint = v
+        aplicarSprint(v)
+    end)
+    local c2 = cardCategoria("🔒 EM BREVE", pagParkour)
+    linhaLabel(c2, "Jump Power Boost — 🔒 Em breve", 1, Cfg.Cores.TextoSec)
+    linhaLabel(c2, "Movement Settings — 🔒 Em breve", 2, Cfg.Cores.TextoSec)
+end
+
+--// ABA: AUTO JJ'S
+local pagJJ = novaPagina("Auto JJ's")
+do
+    local c = cardCategoria("AUTO JJ'S", pagJJ)
+    toggle(c, "Ativar Auto JJ's", State.JJEnabled, 1, function(v)
+        State.JJEnabled = v
+        if v then iniciarJJ() end
+    end)
+    toggle(c, "Auto Jump", State.JJAj, 2, function(v) State.JJAj = v end)
+    slider(c, "Jump Delay", 1, 50, math.floor(State.JJDelay*100), 3, function(v) State.JJDelay = v / 100 end, "x100")
+    toggle(c, "Auto Sprint", State.JJSprint, 4, function(v) State.JJSprint = v end)
+    toggle(c, "Auto Movement", State.JJMovement, 5, function(v) State.JJMovement = v end)
+    slider(c, "Interval", 1, 10, State.JJInterval, 6, function(v) State.JJInterval = v end, "s")
+end
+
+--// ABA: MISC
+local pagMisc = novaPagina("Misc")
+do
+    local cP = cardCategoria("PLAYER", pagMisc)
+    toggle(cP, "WalkSpeed", State.WalkSpeedOn, 1, function(v) State.WalkSpeedOn = v; aplicarWalkSpeed() end)
+    slider(cP, "Speed", 8, 200, State.WalkSpeed, 2, function(v)
+        State.WalkSpeed = v
+        if State.WalkSpeedOn then aplicarWalkSpeed() end
+    end)
+    toggle(cP, "JumpPower", State.JumpPowerOn, 3, function(v) State.JumpPowerOn = v; aplicarJumpPower() end)
+    slider(cP, "Power", 30, 300, State.JumpPower, 4, function(v)
+        State.JumpPower = v
+        if State.JumpPowerOn then aplicarJumpPower() end
+    end)
+    toggle(cP, "Gravity", State.GravityOn, 5, function(v)
+        State.GravityOn = v
+        workspace.Gravity = v and State.Gravity or Orig.Gravity
+    end)
+    slider(cP, "Gravity", 20, 400, math.floor(State.Gravity), 6, function(v)
+        State.Gravity = v
+        if State.GravityOn then workspace.Gravity = v end
+    end)
+    toggle(cP, "Camera FOV", State.CameraFovOn, 7, function(v)
+        State.CameraFovOn = v
+        if Camera then Camera.FieldOfView = v and State.CameraFov or Orig.CameraFov end
+    end)
+    slider(cP, "Camera FOV", 40, 140, State.CameraFov, 8, function(v)
+        State.CameraFov = v
+        if State.CameraFovOn and Camera then Camera.FieldOfView = v end
+    end)
+    toggle(cP, "Sprint", State.Sprint, 9, function(v) State.Sprint = v; aplicarSprint(v) end)
+    toggle(cP, "Auto Jump", State.AutoJump, 10, function(v)
+        State.AutoJump = v
+        if v then iniciarAutoJump() else pararAutoJump() end
+    end)
+    local cA = cardCategoria("AÇÕES", pagMisc)
+    botao(cA, "Reset Character", 1, function()
+        local hum = getHumanoid()
+        if hum then hum.Health = 0 end
+    end)
+    botao(cA, "Rejoin", 2, function() TeleportService:Teleport(game.PlaceId, LocalPlayer) end)
+    botao(cA, "Server Hop", 3, function()
+        local ok, list = pcall(function()
+            return HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100"))
+        end)
+        if ok and list and list.data then
+            for _, s in ipairs(list.data) do
+                if s.playing < s.maxPlayers and s.id ~= game.JobId then
+                    pcall(function() TeleportService:TeleportToPlaceInstance(game.PlaceId, s.id, LocalPlayer) end)
+                    return
+                end
+            end
+            notificar("Nenhum servidor disponível", "aviso")
+        else notificar("Falha ao buscar servidores", "erro") end
+    end)
+    local cS = cardCategoria("SISTEMA", pagMisc)
+    toggle(cS, "Notifications", State.Notifications, 1, function(v) State.Notifications = v end)
+    slider(cS, "UI Scale", 70, 130, math.floor(State.UIScale*100), 2, function(v)
+        State.UIScale = v/100; ajustarTamanho()
+    end, "%")
+    linhaLabel(cS, "Keybind: RightShift (mostrar/ocultar)", 3, Cfg.Cores.TextoSec)
+    local temas = {
+        Roxo = {Destaque=Color3.fromRGB(138,100,255), Destaque2=Color3.fromRGB(96,66,210)},
+        Azul = {Destaque=Color3.fromRGB(96,176,255), Destaque2=Color3.fromRGB(46,126,205)},
+        Rosa = {Destaque=Color3.fromRGB(255,120,200), Destaque2=Color3.fromRGB(200,70,150)},
+        Verde = {Destaque=Color3.fromRGB(74,222,128), Destaque2=Color3.fromRGB(44,172,88)},
+    }
+    local ordemTemas = {"Roxo","Azul","Rosa","Verde"}
+    local idxTema = 1
+    local wrapTheme = criar("Frame", {Size=UDim2.new(1,0,0,32), BackgroundTransparency=1, LayoutOrder=4, Parent=cS})
+    local bTheme = criar("TextButton", {Size=UDim2.new(1,0,1,0), BackgroundColor3=Cfg.Cores.Painel3, Text="Theme: Roxo", TextColor3=Cfg.Cores.Texto, Font=Cfg.FonteBold, TextSize=12, AutoButtonColor=false, Parent=wrapTheme})
+    corner(bTheme, 6)
+    bTheme.MouseButton1Click:Connect(function()
+        idxTema = (idxTema % #ordemTemas) + 1
+        local nome = ordemTemas[idxTema]; local t = temas[nome]
+        Cfg.Cores.Destaque = t.Destaque; Cfg.Cores.Destaque2 = t.Destaque2
+        bTheme.Text = "Theme: "..nome; fovStroke.Color = t.Destaque
+        notificar("Tema: "..nome, "ok")
+    end)
+    local wrapSave = criar("Frame", {Size=UDim2.new(1,0,0,32), BackgroundTransparency=1, LayoutOrder=5, Parent=cS})
+    local bSave = criar("TextButton", {Size=UDim2.new(0.48,0,1,0), BackgroundColor3=Cfg.Cores.Verde, Text="Salvar", TextColor3=Color3.new(1,1,1), Font=Cfg.FonteBold, TextSize=12, AutoButtonColor=false, Parent=wrapSave})
+    corner(bSave, 6)
+    local bLoad = criar("TextButton", {Size=UDim2.new(0.48,0,1,0), Position=UDim2.new(0.52,0,0,0), BackgroundColor3=Cfg.Cores.Azul, Text="Restaurar", TextColor3=Color3.new(1,1,1), Font=Cfg.FonteBold, TextSize=12, AutoButtonColor=false, Parent=wrapSave})
+    corner(bLoad, 6)
+    local wrapReset = criar("Frame", {Size=UDim2.new(1,0,0,32), BackgroundTransparency=1, LayoutOrder=6, Parent=cS})
+    local bReset = criar("TextButton", {Size=UDim2.new(1,0,1,0), BackgroundColor3=Cfg.Cores.Vermelho, Text="Resetar Configurações", TextColor3=Color3.new(1,1,1), Font=Cfg.FonteBold, TextSize=12, AutoButtonColor=false, Parent=wrapReset})
+    corner(bReset, 6)
+    bSave.MouseButton1Click:Connect(function()
+        local copia = {}
+        for k, v in pairs(State) do
+            local t = typeof(v)
+            if t == "number" or t == "string" or t == "boolean" then copia[k] = v
+            elseif t == "Color3" then copia[k] = {v.R, v.G, v.B, __color=true} end
+        end
+        State.SavedSnapshot = HttpService:JSONEncode(copia)
+        notificar("Configurações salvas!", "ok")
+    end)
+    bLoad.MouseButton1Click:Connect(function()
+        local ok, dados = pcall(function() return HttpService:JSONDecode(State.SavedSnapshot) end)
+        if not ok or not dados then notificar("Nada para restaurar", "aviso"); return end
+        for k, v in pairs(dados) do
+            if type(v) == "table" and v.__color then State[k] = Color3.new(v[1], v[2], v[3])
+            else State[k] = v end
+        end
+        State._currentTarget = nil; State._silentTarget = nil
+        aplicarEstadoCompleto()
+        notificar("Configurações restauradas!", "ok")
+    end)
+    bReset.MouseButton1Click:Connect(function()
+        local ok, dados = pcall(function() return HttpService:JSONDecode(defaultState) end)
+        if ok and dados then
+            for k, v in pairs(dados) do if type(v) ~= "table" then State[k] = v end end
+            State.KeyValidated = true
+            State._currentTarget = nil; State._silentTarget = nil
+            aplicarEstadoCompleto()
+            notificar("Configurações resetadas!", "ok")
+        end
+    end)
+end
+
+--// ABA: FPS
+local pagFps = novaPagina("FPS")
+local fpsRefs = {}
+do
+    local cD = cardCategoria("MONITOR", pagFps)
+    local grid = criar("Frame", {Size=UDim2.new(1,0,0,88), BackgroundTransparency=1, LayoutOrder=1, Parent=cD})
+    criar("UIGridLayout", {CellSize=UDim2.new(0.5,-4,0,40), CellPadding=UDim2.new(0,8,0,8), SortOrder=Enum.SortOrder.LayoutOrder, Parent=grid})
+    local function statCard(titulo, valorInicial, cor)
+        local c = criar("Frame", {BackgroundColor3=Cfg.Cores.Painel3, BorderSizePixel=0, Parent=grid})
+        corner(c, 8)
+        criar("TextLabel", {Size=UDim2.new(1,-12,0,14), Position=UDim2.new(0,8,0,5), BackgroundTransparency=1, Text=titulo, TextColor3=Cfg.Cores.TextoSec, Font=Cfg.Fonte, TextSize=10, TextXAlignment=Enum.TextXAlignment.Left, Parent=c})
+        local v = criar("TextLabel", {Size=UDim2.new(1,-12,0,18), Position=UDim2.new(0,8,0,17), BackgroundTransparency=1, Text=valorInicial, TextColor3=cor, Font=Cfg.FonteBold, TextSize=14, TextXAlignment=Enum.TextXAlignment.Left, Parent=c})
+        return v
+    end
+    fpsRefs.FPS = statCard("FPS", "60", Cfg.Cores.Verde)
+    fpsRefs.Ping = statCard("PING", "-- ms", Cfg.Cores.Azul)
+    fpsRefs.Players = statCard("PLAYERS", tostring(#Players:GetPlayers()), Cfg.Cores.Destaque)
+    fpsRefs.Session = statCard("SESSION", "00:00", Cfg.Cores.Amarelo)
+    local perf = cardCategoria("PERFORMANCE", pagFps)
+    fpsRefs.PerfLbl = criar("TextLabel", {Size=UDim2.new(1,0,0,24), BackgroundTransparency=1, Text="Performance: GOOD", TextColor3=Cfg.Cores.Verde, Font=Cfg.FonteBold, TextSize=16, LayoutOrder=1, Parent=perf})
+    local cB = cardCategoria("OTIMIZAÇÃO", pagFps)
+    toggle(cB, "FPS Boost", State.FpsBoost, 1, function(v) State.FpsBoost = v; aplicarFpsBoost(v); notificar("FPS Boost: "..(v and "ON" or "OFF"), "ok") end)
+    toggle(cB, "Anti-Lag", State.AntiLag, 2, function(v) State.AntiLag = v; aplicarAntiLag(v); notificar("Anti-Lag: "..(v and "ON" or "OFF"), "ok") end)
+    toggle(cB, "Performance Mode", State.PerfMode, 3, function(v) State.PerfMode = v; aplicarPerformanceMode(v) end)
+    toggle(cB, "Reduzir efeitos", State.ReduceEffects, 4, function(v) State.ReduceEffects = v; aplicarReduceEffects(v) end)
+    toggle(cB, "Reduzir partículas", State.ReduceParticles, 5, function(v) State.ReduceParticles = v; aplicarReduceParticles(v) end)
+    toggle(cB, "Otimizar interface", State.OptimizeUI, 6, function(v) State.OptimizeUI = v end)
+    toggle(cB, "Otimizar atualizações", State.OptimizeUpdates, 7, function(v) State.OptimizeUpdates = v end)
+end
+
+--// ABA: 🛠️ TOOLS
+local pagTools = novaPagina("🛠️ Tools")
+local toolsRefs = {}
+do
+    local cTP = cardCategoria("TELEPORT PLAYER", pagTools)
+    toolsRefs.selLabel = criar("TextLabel", {
+        Size = UDim2.new(1, 0, 0, 18), BackgroundTransparency = 1,
+        Text = "Selecionado: —", TextColor3 = Cfg.Cores.DestaqueGlow,
+        Font = Cfg.FonteBold, TextSize = 12,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        LayoutOrder = 1, Parent = cTP,
+    })
+    local listaFrame = criar("Frame", {Size = UDim2.new(1, 0, 0, 140), BackgroundColor3 = Cfg.Cores.Fundo, BorderSizePixel = 0, LayoutOrder = 2, Parent = cTP})
+    corner(listaFrame, 8); stroke(listaFrame, Cfg.Cores.Borda, 1, 0.4)
+    local listaScroll = criar("ScrollingFrame", {
+        Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, BorderSizePixel = 0,
+        ScrollBarThickness = 3, ScrollBarImageColor3 = Cfg.Cores.Destaque,
+        CanvasSize = UDim2.new(0, 0, 0, 0), AutomaticCanvasSize = Enum.AutomaticSize.Y,
+        Parent = listaFrame,
+    })
+    criar("UIPadding", {PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 6), PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6), Parent = listaScroll})
+    criar("UIListLayout", {Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.Name, Parent = listaScroll})
+
+    local function atualizarListaJogadores()
+        for _, c in ipairs(listaScroll:GetChildren()) do
+            if c:IsA("TextButton") or c:IsA("TextLabel") then c:Destroy() end
+        end
+        local jogadores = {}
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr ~= LocalPlayer then table.insert(jogadores, plr) end
+        end
+        if #jogadores == 0 then
+            criar("TextLabel", {Size = UDim2.new(1, 0, 0, 30), BackgroundTransparency = 1, Text = "Nenhum jogador encontrado", TextColor3 = Cfg.Cores.TextoSec, Font = Cfg.Fonte, TextSize = 12, Parent = listaScroll})
+            toolsRefs.selLabel.Text = "Selecionado: —"
+            State._tpSelected = nil
+            return
+        end
+        if State._tpSelected then
+            local ainda = false
+            for _, p in ipairs(jogadores) do
+                if p == State._tpSelected then ainda = true break end
+            end
+            if not ainda then State._tpSelected = nil end
+        end
+        for i, plr in ipairs(jogadores) do
+            local estaSelecionado = (plr == State._tpSelected)
+            local b = criar("TextButton", {
+                Size = UDim2.new(1, 0, 0, 30),
+                BackgroundColor3 = estaSelecionado and Cfg.Cores.Destaque2 or Cfg.Cores.Painel2,
+                Text = "  " .. plr.Name,
+                TextColor3 = estaSelecionado and Color3.new(1,1,1) or Cfg.Cores.Texto,
+                Font = estaSelecionado and Cfg.FonteBold or Cfg.Fonte,
+                TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left,
+                AutoButtonColor = false, LayoutOrder = i, Parent = listaScroll,
+            })
+            corner(b, 6)
+            b.MouseEnter:Connect(function()
+                if State._tpSelected ~= plr then tw(b, 0.12, {BackgroundColor3 = Cfg.Cores.Painel3}) end
+            end)
+            b.MouseLeave:Connect(function()
+                if State._tpSelected ~= plr then tw(b, 0.12, {BackgroundColor3 = Cfg.Cores.Painel2}) end
+            end)
+            b.MouseButton1Click:Connect(function()
+                State._tpSelected = plr
+                atualizarListaJogadores()
+            end)
+        end
+        if State._tpSelected then
+            toolsRefs.selLabel.Text = "Selecionado: " .. State._tpSelected.Name
+            toolsRefs.selLabel.TextColor3 = Cfg.Cores.Verde
+        else
+            toolsRefs.selLabel.Text = "Selecionado: —"
+            toolsRefs.selLabel.TextColor3 = Cfg.Cores.DestaqueGlow
+        end
+    end
+
+    local wrapTPBtns = criar("Frame", {Size = UDim2.new(1, 0, 0, 32), BackgroundTransparency = 1, Layou
